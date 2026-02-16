@@ -1,0 +1,251 @@
+<% layout('/layouts/boilerplate') %>
+
+<div class="admin-bookings">
+    <h2 class="mb-4"><i class="fas fa-clipboard-list"></i> Manage Bookings</h2>
+
+    <!-- Filters -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="GET" action="/admin/bookings" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Status Filter</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="all" <%= currentStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                        <option value="Pending" <%= currentStatus === 'Pending' ? 'selected' : '' %>>⏳ Pending</option>
+                        <option value="Accepted" <%= currentStatus === 'Accepted' ? 'selected' : '' %>>✅ Accepted</option>
+                        <option value="In Progress" <%= currentStatus === 'In Progress' ? 'selected' : '' %>>🚀 In Progress</option>
+                        <option value="Completed" <%= currentStatus === 'Completed' ? 'selected' : '' %>>✔️ Completed</option>
+                        <option value="Cancelled" <%= currentStatus === 'Cancelled' ? 'selected' : '' %>>❌ Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Search</label>
+                    <input type="text" name="search" class="form-control" placeholder="Search by user, service, booking ID..." value="<%= searchTerm %>">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <a href="/admin/bookings" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <% if (bookings.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead style="background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)); color: white;">
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>User</th>
+                                <th>Service</th>
+                                <th>Address</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% bookings.forEach(booking => { %>
+                                <tr id="booking-<%= booking._id %>">
+                                    <td>
+                                        <code style="background: #f8f9fa; padding: 0.35rem 0.7rem; border-radius: 8px; font-weight: 600;">
+                                            <%= booking.bookingId %>
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong><%= booking.user?.username || 'N/A' %></strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-phone"></i> <%= booking.user?.phone || 'N/A' %>
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span style="font-size: 2rem;"><%= booking.service?.icon || '🛠️' %></span>
+                                            <div>
+                                                <strong><%= booking.service?.name || 'N/A' %></strong>
+                                                <br>
+                                                <small class="text-muted"><%= booking.service?.category %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="max-width: 200px;">
+                                        <small>
+                                            <i class="fas fa-map-marker-alt text-danger"></i>
+                                            <%= booking.address.street %>,
+                                            <%= booking.address.city %>,
+                                            <%= booking.address.pincode %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <i class="fas fa-calendar"></i>
+                                            <%= new Date(booking.scheduledDate).toLocaleDateString('en-IN') %>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i> <%= booking.scheduledTime %>
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% 
+                                            let badgeClass = 'secondary';
+                                            let icon = '';
+                                            if (booking.status === 'Pending') { badgeClass = 'warning'; icon = '⏳'; }
+                                            if (booking.status === 'Accepted') { badgeClass = 'primary'; icon = '✅'; }
+                                            if (booking.status === 'In Progress') { badgeClass = 'info'; icon = '🚀'; }
+                                            if (booking.status === 'Completed') { badgeClass = 'success'; icon = '✔️'; }
+                                            if (booking.status === 'Cancelled') { badgeClass = 'danger'; icon = '❌'; }
+                                        %>
+                                        <span class="badge bg-<%= badgeClass %> status-badge px-3 py-2" data-booking-id="<%= booking._id %>" style="font-size: 0.9rem;">
+                                            <%= icon %> <%= booking.status %>
+                                        </span>
+                                    </td>
+                                    <td><strong style="color: var(--primary-color); font-size: 1.1rem;">₹<%= booking.totalPrice %></strong></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <% if (booking.status === 'Pending') { %>
+                                                <button class="btn btn-success" onclick="updateStatus('<%= booking._id %>', 'Accepted')" title="Accept Booking">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            <% } %>
+                                            <% if (booking.status === 'Accepted') { %>
+                                                <button class="btn btn-info" onclick="updateStatus('<%= booking._id %>', 'In Progress')" title="Start Service">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                            <% } %>
+                                            <% if (booking.status === 'In Progress') { %>
+                                                <button class="btn btn-success" onclick="updateStatus('<%= booking._id %>', 'Completed')" title="Mark Completed">
+                                                    <i class="fas fa-check-double"></i>
+                                                </button>
+                                            <% } %>
+                                            <% if (booking.status !== 'Cancelled' && booking.status !== 'Completed') { %>
+                                                <button class="btn btn-danger" onclick="updateStatus('<%= booking._id %>', 'Cancelled')" title="Cancel Booking">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-5x text-muted mb-3"></i>
+                    <h4 class="text-muted">No bookings found</h4>
+                    <p class="text-muted">Try adjusting your filters</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="spinner-border text-light" style="width: 4rem; height: 4rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<script>
+// Update booking status via AJAX
+function updateStatus(bookingId, newStatus) {
+    const statusEmoji = {
+        'Pending': '⏳',
+        'Accepted': '✅',
+        'In Progress': '🚀',
+        'Completed': '✔️',
+        'Cancelled': '❌'
+    };
+    
+    if (!confirm(`Change status to ${statusEmoji[newStatus]} ${newStatus}?`)) return;
+    
+    // Show loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    fetch(`/admin/bookings/${bookingId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (data.success) {
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+            successMsg.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            
+            // Remove after 3 seconds
+            setTimeout(() => successMsg.remove(), 3000);
+            
+            // Reload page to show updated status
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        alert('Failed to update status. Please try again.');
+        console.error(err);
+    });
+}
+
+// Add animation to rows
+document.querySelectorAll('tbody tr').forEach((row, index) => {
+    row.style.animation = `fadeInUp 0.5s ease ${index * 0.05}s both`;
+});
+</script>
+
+<style>
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background: #f8f9fa;
+    transform: scale(1.01);
+}
+
+.admin-bookings .card {
+    border: none;
+    border-radius: 15px;
+}
+
+.btn-group-sm .btn {
+    padding: 0.4rem 0.7rem;
+}
+</style>

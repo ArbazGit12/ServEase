@@ -1,0 +1,410 @@
+<% layout('/layouts/boilerplate') %>
+
+<style>
+/* Auth Page Styling with Beautiful Transitions */
+.auth-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(255, 22, 84, 0.15);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: fadeInUp 0.6s ease;
+    position: relative;
+}
+
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transform: scaleX(0);
+    transition: transform 0.5s ease;
+}
+
+.auth-card:hover::before {
+    transform: scaleX(1);
+}
+
+.auth-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(255, 22, 84, 0.25);
+}
+
+.auth-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+    padding: 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+    background-size: 30px 30px;
+    opacity: 0.3;
+    animation: patternMove 20s linear infinite;
+}
+
+@keyframes patternMove {
+    0% { transform: translateX(0) translateY(0); }
+    100% { transform: translateX(30px) translateY(30px); }
+}
+
+.auth-header h3 {
+    color: white;
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+    animation: slideInDown 0.5s ease;
+}
+
+.auth-header i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    animation: iconBounce 2s ease infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.auth-body {
+    padding: 2.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.form-control {
+    border: 2px solid #E9ECEF;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #F8F9FA;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(255, 22, 84, 0.15);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.form-control:hover {
+    border-color: var(--secondary-color);
+    background: white;
+}
+
+.btn-auth {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 5px 15px rgba(255, 22, 84, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-auth::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-auth:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(255, 22, 84, 0.4);
+}
+
+.btn-auth:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-auth:active {
+    transform: translateY(-2px);
+}
+
+.auth-footer {
+    text-align: center;
+    padding: 1.5rem;
+    background: #F8F9FA;
+    border-top: 1px solid #E9ECEF;
+}
+
+.auth-footer p {
+    margin: 0;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.auth-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(255, 22, 84, 0.2);
+}
+
+.auth-footer a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 50%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.auth-footer a:hover {
+    color: var(--secondary-color);
+    text-shadow: 0 3px 8px rgba(255, 22, 84, 0.4);
+}
+
+.auth-footer a:hover::after {
+    width: 100%;
+}
+
+.section-title {
+    color: var(--primary-dark);
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    display: inline-block;
+    width: 100%;
+    text-shadow: 0 2px 4px rgba(255, 22, 84, 0.1);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mb-3 {
+    animation: fadeInUp 0.5s ease;
+}
+
+.mb-3:nth-child(1) { animation-delay: 0.1s; }
+.mb-3:nth-child(2) { animation-delay: 0.2s; }
+.mb-3:nth-child(3) { animation-delay: 0.3s; }
+.mb-3:nth-child(4) { animation-delay: 0.4s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .auth-header h3 {
+        font-size: 1.5rem;
+    }
+    
+    .auth-header i {
+        font-size: 2.5rem;
+    }
+    
+    .auth-body {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <i class="fas fa-user-plus"></i>
+                        <h3>Create Your Account</h3>
+                    </div>
+                    
+                    <div class="auth-body">
+                        <form action="/signup" method="POST" novalidate class="needs-validation">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user"></i> Username
+                                </label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="username" 
+                                    name="username" 
+                                    placeholder="Choose a unique username"
+                                    required
+                                    autofocus
+                                >
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Email
+                                </label>
+                                <input 
+                                    type="email" 
+                                    class="form-control" 
+                                    id="email" 
+                                    name="email" 
+                                    placeholder="your.email@example.com"
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">
+                                    <i class="fas fa-phone"></i> Phone Number
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    class="form-control" 
+                                    id="phone" 
+                                    name="phone" 
+                                    placeholder="+91 1234567890"
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock"></i> Password
+                                </label>
+                                <input 
+                                    type="password" 
+                                    class="form-control" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Create a strong password"
+                                    required
+                                >
+                            </div>
+                            
+                            <h5 class="section-title">
+                                <i class="fas fa-map-marker-alt"></i> Address (Optional)
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="street" class="form-label">Street Address</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="street" 
+                                    name="address[street]"
+                                    placeholder="123 Main Street"
+                                >
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="city" class="form-label">City</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="city" 
+                                        name="address[city]"
+                                        placeholder="Your city"
+                                    >
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="state" class="form-label">State</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="state" 
+                                        name="address[state]"
+                                        placeholder="Your state"
+                                    >
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="pincode" class="form-label">Pincode</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="pincode" 
+                                    name="address[pincode]"
+                                    placeholder="123456"
+                                >
+                            </div>
+                            
+                            <button type="submit" class="btn btn-auth w-100">
+                                <i class="fas fa-user-plus me-2"></i> Sign Up
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="auth-footer">
+                        <p>
+                            Already have an account? 
+                            <a href="/login">
+                                <i class="fas fa-sign-in-alt"></i> Login here
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

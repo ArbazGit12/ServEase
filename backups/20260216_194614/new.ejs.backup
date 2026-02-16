@@ -1,0 +1,318 @@
+<% layout('/layouts/boilerplate') %>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-calendar-plus"></i> Book Service</h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Service Info -->
+                <div class="service-info bg-light p-3 rounded mb-4">
+                    <div class="d-flex align-items-center">
+                        <span style="font-size: 3rem;" class="me-3"><%= service.icon %></span>
+                        <div>
+                            <h5 class="mb-1"><%= service.name %></h5>
+                            <p class="mb-0 text-muted">₹<%= service.basePrice %> | <%= service.duration %> minutes</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form action="/bookings" method="POST" class="needs-validation" novalidate id="bookingForm">
+                    <input type="hidden" name="serviceId" value="<%= service._id %>">
+                    <input type="hidden" name="paymentMethod" id="paymentMethodInput" value="Cash on Service">
+                    
+                    <h5 class="mb-3">Schedule Details</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="scheduledDate" class="form-label">Preferred Date *</label>
+                            <input 
+                                type="date" 
+                                class="form-control" 
+                                id="scheduledDate" 
+                                name="scheduledDate" 
+                                min="<%= new Date().toISOString().split('T')[0] %>"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="scheduledTime" class="form-label">Preferred Time *</label>
+                            <input 
+                                type="time" 
+                                class="form-control" 
+                                id="scheduledTime" 
+                                name="scheduledTime" 
+                                required>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Quick Service:</strong> Our service provider will arrive within 15 minutes of your scheduled time.
+                    </div>
+                    
+                    <h5 class="mb-3 mt-4">Service Address *</h5>
+                    
+                    <div class="mb-3">
+                        <label for="street" class="form-label">Street Address</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="street" 
+                            name="address[street]" 
+                            value="<%= userAddress.street || '' %>"
+                            required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">City</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="city" 
+                                name="address[city]" 
+                                value="<%= userAddress.city || '' %>"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="state" class="form-label">State</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="state" 
+                                name="address[state]" 
+                                value="<%= userAddress.state || '' %>"
+                                required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pincode" class="form-label">Pincode</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="pincode" 
+                            name="address[pincode]" 
+                            value="<%= userAddress.pincode || '' %>"
+                            pattern="[0-9]{6}"
+                            required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="specialInstructions" class="form-label">Special Instructions (Optional)</label>
+                        <textarea 
+                            class="form-control" 
+                            id="specialInstructions" 
+                            name="specialInstructions" 
+                            rows="3"
+                            placeholder="Any specific requirements or instructions..."></textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Payment Method Selection -->
+                    <h5 class="mb-3">Payment Method</h5>
+                    <div class="payment-methods mb-4">
+                        <div class="form-check payment-option p-3 mb-3 border rounded">
+                            <input class="form-check-input" type="radio" name="paymentOption" id="cashPayment" value="Cash on Service" checked>
+                            <label class="form-check-label w-100" for="cashPayment">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-money-bill-wave fa-2x text-success me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0">Cash on Service</h6>
+                                        <small class="text-muted">Pay after service completion</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check payment-option p-3 mb-3 border rounded">
+                            <input class="form-check-input" type="radio" name="paymentOption" id="onlinePayment" value="Online Payment">
+                            <label class="form-check-label w-100" for="onlinePayment">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-credit-card fa-2x text-primary me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0">Pay Online Now</h6>
+                                        <small class="text-muted">Secure payment via Razorpay (UPI, Card, Wallet)</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Total Amount:</h5>
+                        <h4 class="mb-0 text-success">₹<span id="totalAmount"><%= service.basePrice %></span></h4>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="bookNowBtn">
+                        <i class="fas fa-check-circle"></i> Confirm Booking
+                    </button>
+                    
+                    <a href="/services" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left"></i> Back to Services
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    // Set minimum time to current time for today's date
+    document.getElementById('scheduledDate').addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate.getTime() === today.getTime()) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('scheduledTime').min = `${hours}:${minutes}`;
+        } else {
+            document.getElementById('scheduledTime').removeAttribute('min');
+        }
+    });
+
+    // Payment option styling
+    const paymentOptions = document.querySelectorAll('.payment-option');
+    paymentOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            paymentOptions.forEach(opt => opt.classList.remove('border-primary', 'bg-light'));
+            this.classList.add('border-primary', 'bg-light');
+        });
+    });
+
+    // Handle form submission
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const selectedPayment = document.querySelector('input[name="paymentOption"]:checked').value;
+        document.getElementById('paymentMethodInput').value = selectedPayment;
+        
+        // Validate form
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        const bookNowBtn = document.getElementById('bookNowBtn');
+        bookNowBtn.disabled = true;
+        bookNowBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        
+        if (selectedPayment === 'Cash on Service') {
+            // Submit form directly for cash payment
+            form.submit();
+        } else {
+            // Handle online payment
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData);
+                
+                // Create order on backend
+                const response = await fetch('/bookings/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const orderData = await response.json();
+                
+                if (!orderData.success) {
+                    throw new Error(orderData.message || 'Failed to create order');
+                }
+                
+                // Initialize Razorpay
+                const options = {
+                    key: orderData.razorpayKeyId,
+                    amount: orderData.amount,
+                    currency: "INR",
+                    name: "ServEase",
+                    description: orderData.serviceName,
+                    order_id: orderData.orderId,
+                    handler: async function (response) {
+                        // Payment successful, verify and complete booking
+                        try {
+                            const verifyResponse = await fetch('/bookings/verify-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    bookingData: data
+                                })
+                            });
+                            
+                            const verifyData = await verifyResponse.json();
+                            
+                            if (verifyData.success) {
+                                window.location.href = `/bookings/${verifyData.bookingId}?payment=success`;
+                            } else {
+                                throw new Error('Payment verification failed');
+                            }
+                        } catch (error) {
+                            console.error('Verification error:', error);
+                            alert('Payment verification failed. Please contact support.');
+                            bookNowBtn.disabled = false;
+                            bookNowBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+                        }
+                    },
+                    prefill: {
+                        name: "<%= currUser.username %>",
+                        email: "<%= currUser.email %>",
+                    },
+                    theme: {
+                        color: "#FF1654"
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            bookNowBtn.disabled = false;
+                            bookNowBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+                        }
+                    }
+                };
+                
+                const rzp = new Razorpay(options);
+                rzp.open();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Something went wrong. Please try again.');
+                bookNowBtn.disabled = false;
+                bookNowBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            }
+        }
+    });
+</script>
+
+<style>
+    .payment-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-option:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .payment-option.border-primary {
+        border-width: 2px !important;
+    }
+    
+    .form-check-input:checked ~ .form-check-label {
+        font-weight: 600;
+    }
+</style>

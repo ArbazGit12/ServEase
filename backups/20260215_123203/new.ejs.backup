@@ -1,0 +1,147 @@
+<% layout('/layouts/boilerplate') %>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-calendar-plus"></i> Book Service</h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Service Info -->
+                <div class="service-info bg-light p-3 rounded mb-4">
+                    <div class="d-flex align-items-center">
+                        <span style="font-size: 3rem;" class="me-3"><%= service.icon %></span>
+                        <div>
+                            <h5 class="mb-1"><%= service.name %></h5>
+                            <p class="mb-0 text-muted">₹<%= service.basePrice %> | <%= service.duration %> minutes</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form action="/bookings" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="serviceId" value="<%= service._id %>">
+                    
+                    <h5 class="mb-3">Schedule Details</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="scheduledDate" class="form-label">Preferred Date *</label>
+                            <input 
+                                type="date" 
+                                class="form-control" 
+                                id="scheduledDate" 
+                                name="scheduledDate" 
+                                min="<%= new Date().toISOString().split('T')[0] %>"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="scheduledTime" class="form-label">Preferred Time *</label>
+                            <input 
+                                type="time" 
+                                class="form-control" 
+                                id="scheduledTime" 
+                                name="scheduledTime" 
+                                required>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Quick Service:</strong> Our service provider will arrive within 15 minutes of your scheduled time.
+                    </div>
+                    
+                    <h5 class="mb-3 mt-4">Service Address *</h5>
+                    
+                    <div class="mb-3">
+                        <label for="street" class="form-label">Street Address</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="street" 
+                            name="address[street]" 
+                            value="<%= userAddress.street || '' %>"
+                            required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">City</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="city" 
+                                name="address[city]" 
+                                value="<%= userAddress.city || '' %>"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="state" class="form-label">State</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="state" 
+                                name="address[state]" 
+                                value="<%= userAddress.state || '' %>"
+                                required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pincode" class="form-label">Pincode</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="pincode" 
+                            name="address[pincode]" 
+                            value="<%= userAddress.pincode || '' %>"
+                            pattern="[0-9]{6}"
+                            required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="specialInstructions" class="form-label">Special Instructions (Optional)</label>
+                        <textarea 
+                            class="form-control" 
+                            id="specialInstructions" 
+                            name="specialInstructions" 
+                            rows="3"
+                            placeholder="Any specific requirements or instructions..."></textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Total Amount:</h5>
+                        <h4 class="mb-0 text-success">₹<%= service.basePrice %></h4>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-check-circle"></i> Confirm Booking
+                    </button>
+                    
+                    <a href="/services" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left"></i> Back to Services
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set minimum time to current time for today's date
+    document.getElementById('scheduledDate').addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate.getTime() === today.getTime()) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('scheduledTime').min = `${hours}:${minutes}`;
+        } else {
+            document.getElementById('scheduledTime').removeAttribute('min');
+        }
+    });
+</script>

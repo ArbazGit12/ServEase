@@ -1,0 +1,29 @@
+const express = require("express");
+const router = express.Router();
+const wrapAsync = require("../utils/wrapAsync");
+const { isLoggedIn } = require("../middleware");
+const bookingController = require("../controllers/bookings_updated");
+
+// Booking history
+router.get("/history", isLoggedIn, wrapAsync(bookingController.bookingHistory));
+
+// New booking form
+router.get("/new/:serviceId", isLoggedIn, wrapAsync(bookingController.renderBookingForm));
+
+// Create booking (instant booking)
+router.post("/", isLoggedIn, wrapAsync(bookingController.createBooking));
+
+// Payment routes
+router.post("/create-order", isLoggedIn, wrapAsync(bookingController.createOrder));
+router.post("/verify-payment", isLoggedIn, wrapAsync(bookingController.verifyPayment));
+
+// Show booking details
+router.get("/:id", isLoggedIn, wrapAsync(bookingController.showBooking));
+
+// Cancel booking
+router.delete("/:id", isLoggedIn, wrapAsync(bookingController.cancelBooking));
+
+// Rate booking
+router.post("/:id/rate", isLoggedIn, wrapAsync(bookingController.rateBooking));
+
+module.exports = router;

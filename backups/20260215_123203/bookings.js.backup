@@ -1,0 +1,201 @@
+const Booking = require("../models/booking");
+const Service = require("../models/service");
+const moment = require("moment");
+
+// Calculate estimated arrival time (15 minutes as per requirement)
+const calculateArrivalTime = (scheduledDate, scheduledTime) => {
+    const dateTime = moment(`${scheduledDate} ${scheduledTime}`, 'YYYY-MM-DD HH:mm');
+    const arrivalTime = dateTime.add(15, 'minutes');
+    return arrivalTime.format('hh:mm A');
+};
+
+module.exports.renderBookingForm = async (req, res) => {
+    const service = await Service.findById(req.params.serviceId);
+    if (!service) {
+        req.flash("error", "Service not found!");
+        return res.redirect("/services");
+    }
+    
+    // Pre-fill user's address if available
+    const userAddress = req.user.address || {};
+    
+    res.render("bookings/new.ejs", { service, userAddress });
+};
+
+module.exports.createBooking = async (req, res) => {
+    try {
+        const { serviceId, scheduledDate, scheduledTime, address, specialInstructions } = req.body;
+        
+        console.log("📝 Creating booking with data:", { serviceId, scheduledDate, scheduledTime, address });
+        
+        // Validate required fields
+        if (!serviceId || !scheduledDate || !scheduledTime) {
+            req.flash("error", "Please fill all required fields (service, date, time)");
+            return res.redirect("/services");
+        }
+        
+        if (!address || !address.street || !address.city || !address.pincode) {
+            req.flash("error", "Please provide complete address details");
+            return res.redirect(`/bookings/new/${serviceId}`);
+        }
+        
+        const service = await Service.findById(serviceId);
+        if (!service) {
+            req.flash("error", "Service not found!");
+            return res.redirect("/services");
+        }
+        
+        console.log("✅ Service found:", service.name);
+        
+        // Calculate estimated arrival time
+        const estimatedArrivalTime = calculateArrivalTime(scheduledDate, scheduledTime);
+        
+        const newBooking = new Booking({
+            user: req.user._id,
+            service: serviceId,
+            scheduledDate,
+            scheduledTime,
+            address: {
+                street: address.street,
+                city: address.city,
+                state: address.state || '',
+                pincode: address.pincode
+            },
+            totalPrice: service.basePrice,
+            estimatedArrivalTime,
+            specialInstructions: specialInstructions || '',
+            status: "Pending"
+        });
+        
+        const savedBooking = await newBooking.save();
+        console.log("✅ Booking saved successfully:", savedBooking.bookingId);
+        console.log("✅ Saved booking details:", {
+            _id: savedBooking._id,
+            user: savedBooking.user,
+            service: savedBooking.service,
+            status: savedBooking.status,
+            bookingId: savedBooking.bookingId
+        });
+        
+        // Verify the booking was actually saved
+        const verifyBooking = await Booking.findById(savedBooking._id);
+        if (verifyBooking) {
+            console.log("✅ Booking verified in database");
+        } else {
+            console.log("❌ WARNING: Booking not found after save!");
+        }
+        
+        req.flash("success", `Booking confirmed! Your booking ID is ${savedBooking.bookingId}. Service provider will arrive by ${estimatedArrivalTime}`);
+        res.redirect(`/bookings/${savedBooking._id}`);
+    } catch (error) {
+        console.error("❌ Booking creation error:", error);
+        req.flash("error", `Failed to create booking: ${error.message}`);
+        res.redirect("/services");
+    }
+};
+
+module.exports.showBooking = async (req, res) => {
+    const booking = await Booking.findById(req.params.id)
+        .populate("service")
+        .populate("user");
+    
+    if (!booking) {
+        req.flash("error", "Booking not found!");
+        return res.redirect("/bookings/history");
+    }
+    
+    // Check if user owns this booking
+    if (!booking.user._id.equals(req.user._id)) {
+        req.flash("error", "You don't have permission to view this booking");
+        return res.redirect("/bookings/history");
+    }
+    
+    res.render("bookings/show.ejs", { booking });
+};
+
+module.exports.bookingHistory = async (req, res) => {
+    try {
+        console.log("📋 Fetching booking history for user:", req.user._id);
+        console.log("📋 User details:", req.user.username, req.user.email);
+        
+        const bookings = await Booking.find({ user: req.user._id })
+            .populate("service")
+            .sort({ createdAt: -1 });
+        
+        console.log("📋 Found bookings:", bookings.length);
+        
+        if (bookings.length > 0) {
+            console.log("📋 First booking details:", {
+                bookingId: bookings[0].bookingId,
+                service: bookings[0].service ? bookings[0].service.name : 'Service Unavailable',
+                status: bookings[0].status
+            });
+        } else {
+            console.log("⚠️  No bookings found for this user");
+            
+            // Let's check if there are ANY bookings in the database
+            const totalBookings = await Booking.countDocuments();
+            console.log("📊 Total bookings in database:", totalBookings);
+            
+            // Check if there are bookings but with different user
+            if (totalBookings > 0) {
+                const allBookings = await Booking.find().limit(3);
+                console.log("📊 Sample booking user IDs:", allBookings.map(b => b.user.toString()));
+                console.log("📊 Current user ID:", req.user._id.toString());
+            }
+        }
+        
+        res.render("bookings/history.ejs", { bookings });
+    } catch (error) {
+        console.error("❌ Error fetching booking history:", error);
+        req.flash("error", "Failed to load booking history");
+        res.redirect("/services");
+    }
+};
+
+module.exports.cancelBooking = async (req, res) => {
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) {
+        req.flash("error", "Booking not found!");
+        return res.redirect("/bookings/history");
+    }
+    
+    if (!booking.user.equals(req.user._id)) {
+        req.flash("error", "You don't have permission to cancel this booking");
+        return res.redirect("/bookings/history");
+    }
+    
+    if (booking.status === "Completed" || booking.status === "Cancelled") {
+        req.flash("error", "This booking cannot be cancelled");
+        return res.redirect(`/bookings/${booking._id}`);
+    }
+    
+    booking.status = "Cancelled";
+    await booking.save();
+    
+    req.flash("success", "Booking cancelled successfully");
+    res.redirect("/bookings/history");
+};
+
+module.exports.rateBooking = async (req, res) => {
+    const { rating, review } = req.body;
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) {
+        req.flash("error", "Booking not found!");
+        return res.redirect("/bookings/history");
+    }
+    
+    if (!booking.user.equals(req.user._id)) {
+        req.flash("error", "You don't have permission to rate this booking");
+        return res.redirect("/bookings/history");
+    }
+    
+    booking.rating = rating;
+    booking.review = review;
+    await booking.save();
+    
+    req.flash("success", "Thank you for your feedback!");
+    res.redirect(`/bookings/${booking._id}`);
+};

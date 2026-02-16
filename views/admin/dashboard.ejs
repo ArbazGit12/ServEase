@@ -1,0 +1,219 @@
+<% layout('/layouts/boilerplate') %>
+
+<div class="admin-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h2>
+        <span class="badge" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); padding: 0.5rem 1rem; font-size: 1rem;">Admin Panel</span>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-details">
+                    <h3><%= stats.totalUsers %></h3>
+                    <p>Total Users</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-details">
+                    <h3><%= stats.totalBookings %></h3>
+                    <p>Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #ffa751, #ffe259);">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-details">
+                    <h3><%= stats.pendingBookings %></h3>
+                    <p>Pending Requests</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+                <div class="stat-details">
+                    <h3>₹<%= stats.totalRevenue.toLocaleString() %></h3>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/admin/bookings?status=Pending" class="btn btn-warning">
+                            <i class="fas fa-clock"></i> Pending (<%= stats.pendingBookings %>)
+                        </a>
+                        <a href="/admin/bookings?status=Accepted" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Accepted (<%= stats.acceptedBookings %>)
+                        </a>
+                        <a href="/admin/bookings?status=Completed" class="btn btn-success">
+                            <i class="fas fa-check-double"></i> Completed (<%= stats.completedBookings %>)
+                        </a>
+                        <a href="/admin/bookings" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> All Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings & Recommended Services -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Recent Bookings</h5>
+                </div>
+                <div class="card-body p-0">
+                    <% if (recentBookings.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead style="background: #f8f9fa;">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>User</th>
+                                        <th>Service</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentBookings.forEach(booking => { %>
+                                        <tr>
+                                            <td><code style="background: #f8f9fa; padding: 0.25rem 0.5rem; border-radius: 5px;"><%= booking.bookingId %></code></td>
+                                            <td>
+                                                <div>
+                                                    <strong><%= booking.user?.username || 'N/A' %></strong>
+                                                    <br>
+                                                    <small class="text-muted"><%= booking.user?.email || '' %></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span style="font-size: 1.5rem;"><%= booking.service?.icon || '🛠️' %></span>
+                                                <%= booking.service?.name || 'N/A' %>
+                                            </td>
+                                            <td><%= new Date(booking.scheduledDate).toLocaleDateString('en-IN') %></td>
+                                            <td>
+                                                <% 
+                                                    let badgeClass = 'secondary';
+                                                    if (booking.status === 'Pending') badgeClass = 'warning';
+                                                    if (booking.status === 'Accepted') badgeClass = 'primary';
+                                                    if (booking.status === 'In Progress') badgeClass = 'info';
+                                                    if (booking.status === 'Completed') badgeClass = 'success';
+                                                    if (booking.status === 'Cancelled') badgeClass = 'danger';
+                                                %>
+                                                <span class="badge bg-<%= badgeClass %>"><%= booking.status %></span>
+                                            </td>
+                                            <td><strong>₹<%= booking.totalPrice %></strong></td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="/admin/bookings" class="btn btn-sm btn-outline-primary">View All Bookings →</a>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No bookings yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommended Services -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--secondary-color), var(--accent-color)); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Top Services</h5>
+                </div>
+                <div class="card-body p-0">
+                    <% if (recommendedServices && recommendedServices.length > 0) { %>
+                        <div class="list-group list-group-flush">
+                            <% recommendedServices.forEach(service => { %>
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <span style="font-size: 2.5rem;" class="me-3"><%= service.icon %></span>
+                                        <div class="flex-grow-1">
+                                            <strong><%= service.name %></strong>
+                                            <br>
+                                            <small class="text-muted"><%= service.category %></small>
+                                            <br>
+                                            <span class="badge bg-success">₹<%= service.basePrice %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <p class="text-muted">No data yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    padding: 1.5rem;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 3.5rem;
+    opacity: 0.9;
+}
+
+.stat-details h3 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.stat-details p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.admin-dashboard .card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+</style>
