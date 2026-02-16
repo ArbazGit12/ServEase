@@ -3,7 +3,7 @@ const Service = require("../models/service");
 
 require("dotenv").config({ path: "../.env" });
 
-const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/serviceBooking";
+const dbUrl = process.env.ATLASDB_URL;
 
 main()
     .then(() => {
